@@ -3,6 +3,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 class ActivitySession {
@@ -20,6 +21,14 @@ class ActivitySession {
     
     var activityTypeEnum: ActivityType {
         ActivityType(rawValue: activityType) ?? .work
+    }
+    
+    var icon: String {
+        activityTypeEnum.icon
+    }
+    
+    var color: Color {
+        activityTypeEnum.color
     }
     
     var duration: TimeInterval {
