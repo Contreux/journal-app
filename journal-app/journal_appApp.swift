@@ -6,9 +6,12 @@ import SwiftData
 
 @main
 struct journal_appApp: App {
+    @State private var viewModel = ActivityTrackerViewModel()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(viewModel)
         }
         .modelContainer(for: [ActivitySession.self])
     }

@@ -237,60 +237,52 @@ struct DayDetailView: View {
 
 struct SessionRow: View {
     let session: ActivitySession
-    
-    private let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter
-    }()
-    
+
+    private var activityType: ActivityType {
+        session.activityTypeEnum
+    }
+
     var body: some View {
         HStack(spacing: 12) {
-            // Icon
-            Image(systemName: session.activityTypeEnum.icon)
-                .font(.title3)
-                .foregroundStyle(session.activityTypeEnum.color)
-                .frame(width: 40, height: 40)
+            Image(systemName: activityType.icon)
+                .font(.system(size: 16))
+                .foregroundStyle(activityType.color)
+                .frame(width: 32, height: 32)
                 .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(session.activityTypeEnum.color.opacity(0.15))
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(activityType.color.opacity(0.2))
                 )
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(session.activityTypeEnum.rawValue)
-                    .font(.headline)
-                
-                if let summary = session.summary, !summary.isEmpty {
-                    Text(summary)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-                
-                HStack(spacing: 8) {
-                    Text(timeFormatter.string(from: session.startTime))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    
-                    Text("•")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    
-                    Text(session.formattedDuration)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(activityType.rawValue)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.primary)
+
+                Text(session.startTime, style: .date)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
             }
-            
+
             Spacer()
-            
-            if session.isActive {
-                Image(systemName: "play.fill")
-                    .font(.caption)
-                    .foregroundStyle(.green)
-            }
+
+            Text(formatDuration(session.duration))
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .foregroundStyle(.primary)
         }
-        .padding(.vertical, 4)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+        )
+    }
+
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let hours = Int(duration) / 3600
+        let minutes = (Int(duration) % 3600) / 60
+        if hours > 0 {
+            return String(format: "%dh %02dm", hours, minutes)
+        }
+        return String(format: "%02dm", minutes)
     }
 }
 

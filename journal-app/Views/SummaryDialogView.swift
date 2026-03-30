@@ -94,7 +94,7 @@ struct SummaryDialogView: View {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.separator, lineWidth: 1)
+                                .stroke(.separator, lineWidth: 1)
                         )
                         .focused($isTextFieldFocused)
                         .onChange(of: viewModel.transcribedText) { oldValue, newValue in

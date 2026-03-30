@@ -86,15 +86,19 @@ class ActivityTrackerViewModel {
     
     func requestRecordingPermission() async -> Bool {
         // Request microphone permission
-        let micStatus = await AVAudioSession.sharedInstance().requestRecordPermission()
-        
+        let micStatus = await withCheckedContinuation { continuation in
+            AVAudioSession.sharedInstance().requestRecordPermission { granted in
+                continuation.resume(returning: granted)
+            }
+        }
+
         // Request speech recognition permission
         await withCheckedContinuation { continuation in
             SFSpeechRecognizer.requestAuthorization { status in
                 continuation.resume()
             }
         }
-        
+
         return micStatus
     }
     
