@@ -1,8 +1,23 @@
 // journal-app/journal-app/Models/ActivityType.swift
-// Defines all available activity types
 
 import Foundation
 import SwiftUI
+
+enum ActivityCategory: String, CaseIterable, Identifiable {
+    case body = "Body"
+    case mind = "Mind"
+    case life = "Life"
+
+    var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .body: return "figure.stand"
+        case .mind: return "brain.head.profile"
+        case .life: return "house.fill"
+        }
+    }
+}
 
 enum ActivityType: String, CaseIterable, Identifiable {
     case gym = "Gym"
@@ -19,9 +34,20 @@ enum ActivityType: String, CaseIterable, Identifiable {
     case meeting = "Meeting"
     case learning = "Learning"
     case rest = "Rest"
-    
+
     var id: String { rawValue }
-    
+
+    var category: ActivityCategory {
+        switch self {
+        case .gym, .running, .meditation, .rest:
+            return .body
+        case .work, .sideProject, .learning, .reading:
+            return .mind
+        case .social, .cooking, .cleaning, .commute, .meeting, .hobby:
+            return .life
+        }
+    }
+
     var icon: String {
         switch self {
         case .gym: return "dumbbell.fill"
@@ -40,23 +66,29 @@ enum ActivityType: String, CaseIterable, Identifiable {
         case .rest: return "bed.double.fill"
         }
     }
-    
+
     var color: Color {
         switch self {
-        case .gym: return .red
-        case .running: return .orange
-        case .social: return .blue
-        case .work: return .indigo
-        case .sideProject: return .purple
-        case .hobby: return .pink
-        case .cleaning: return .cyan
-        case .reading: return .brown
-        case .meditation: return .green
-        case .cooking: return .yellow
-        case .commute: return .gray
-        case .meeting: return .teal
-        case .learning: return .mint
-        case .rest: return .indigo.opacity(0.6)
+        case .gym: return Color(red: 0.90, green: 0.30, blue: 0.30)
+        case .running: return Color(red: 0.95, green: 0.50, blue: 0.35)
+        case .social: return Color(red: 0.35, green: 0.55, blue: 0.90)
+        case .work: return Color(red: 0.40, green: 0.40, blue: 0.70)
+        case .sideProject: return Color(red: 0.65, green: 0.40, blue: 0.75)
+        case .hobby: return Color(red: 0.85, green: 0.50, blue: 0.60)
+        case .cleaning: return Color(red: 0.40, green: 0.72, blue: 0.72)
+        case .reading: return Color(red: 0.65, green: 0.50, blue: 0.38)
+        case .meditation: return Color(red: 0.45, green: 0.70, blue: 0.50)
+        case .cooking: return Color(red: 0.90, green: 0.70, blue: 0.30)
+        case .commute: return Color(red: 0.60, green: 0.58, blue: 0.56)
+        case .meeting: return Color(red: 0.30, green: 0.60, blue: 0.68)
+        case .learning: return Color(red: 0.35, green: 0.62, blue: 0.45)
+        case .rest: return Color(red: 0.62, green: 0.55, blue: 0.80)
+        }
+    }
+
+    static var grouped: [(category: ActivityCategory, types: [ActivityType])] {
+        ActivityCategory.allCases.map { cat in
+            (category: cat, types: allCases.filter { $0.category == cat })
         }
     }
 }

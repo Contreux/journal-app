@@ -1,5 +1,4 @@
 // journal-app/journal-app/Views/CalendarView.swift
-// Monthly calendar with day detail view
 
 import SwiftUI
 import SwiftData
@@ -7,282 +6,472 @@ import SwiftData
 struct CalendarView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \ActivitySession.startTime, order: .reverse) private var allSessions: [ActivitySession]
-    
+
     @State private var selectedDate: Date = Date()
     @State private var currentMonth: Date = Date()
-    
+    @State private var editingSession: ActivitySession?
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Month Header
-                MonthHeaderView(currentMonth: $currentMonth)
-                
-                // Calendar Grid
-                CalendarGridView(currentMonth: currentMonth, selectedDate: $selectedDate, sessions: allSessions)
-                    .padding(.horizontal)
-                
-                Divider()
-                    .padding(.vertical, 8)
-                
-                // Selected Date Sessions
-                DayDetailView(date: selectedDate, sessions: sessionsForDate(selectedDate))
+            ScrollView {
+                VStack(spacing: 0) {
+                    CalendarGridView(
+                        currentMonth: $currentMonth,
+                        selectedDate: $selectedDate,
+                        sessions: allSessions
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
+
+                    // Week summary
+                    WeekSummaryStrip(selectedDate: selectedDate, sessions: allSessions)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 8)
+
+                    Divider().padding(.horizontal, 16)
+
+                    // Day sessions
+                    DaySessionsView(
+                        date: selectedDate,
+                        sessions: sessionsForDate(selectedDate)
+                    ) { session in
+                        editingSession = session
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 24)
+                }
             }
-            .navigationTitle("Activity History")
+            .navigationTitle("History")
+            .sheet(item: $editingSession) { session in
+                SessionEditView(session: session) {
+                    modelContext.delete(session)
+                }
+            }
         }
     }
-    
+
     private func sessionsForDate(_ date: Date) -> [ActivitySession] {
-        let calendar = Calendar.current
-        return allSessions.filter { session in
-            calendar.isDate(session.startTime, inSameDayAs: date)
-        }
+        allSessions.filter { Calendar.current.isDate($0.startTime, inSameDayAs: date) }
     }
 }
 
-struct MonthHeaderView: View {
-    @Binding var currentMonth: Date
-    
-    private let monthFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter
-    }()
-    
-    var body: some View {
-        HStack {
-            Button {
-                withAnimation {
-                    currentMonth = Calendar.current.date(byAdding: .month, value: -1, to: currentMonth)!
-                }
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title3)
-                    .foregroundStyle(.primary)
-            }
-            
-            Spacer()
-            
-            Text(monthFormatter.string(from: currentMonth))
-                .font(.title3)
-                .fontWeight(.semibold)
-            
-            Spacer()
-            
-            Button {
-                withAnimation {
-                    currentMonth = Calendar.current.date(byAdding: .month, value: 1, to: currentMonth)!
-                }
-            } label: {
-                Image(systemName: "chevron.right")
-                    .font(.title3)
-                    .foregroundStyle(.primary)
-            }
-        }
-        .padding()
-    }
-}
+// MARK: - Calendar Grid
 
 struct CalendarGridView: View {
-    let currentMonth: Date
+    @Binding var currentMonth: Date
     @Binding var selectedDate: Date
     let sessions: [ActivitySession]
-    
+
     private let calendar = Calendar.current
-    private let weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-    
+    private let weekDays = ["S", "M", "T", "W", "T", "F", "S"]
+    private let monthFormatter: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "MMMM yyyy"; return f
+    }()
+
     var body: some View {
-        VStack(spacing: 8) {
-            // Weekday headers
+        VStack(spacing: 12) {
+            // Month header
             HStack {
-                ForEach(weekDays, id: \.self) { day in
+                Text(monthFormatter.string(from: currentMonth))
+                    .font(.title3.bold())
+                Spacer()
+                HStack(spacing: 16) {
+                    Button { step(-1) } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 44, height: 44)
+                    }
+                    Button { step(1) } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 44, height: 44)
+                    }
+                }
+            }
+            .padding(.top, 8)
+
+            // Weekday labels
+            HStack(spacing: 0) {
+                ForEach(Array(weekDays.enumerated()), id: \.offset) { _, day in
                     Text(day)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.tertiary)
                         .frame(maxWidth: .infinity)
                 }
             }
-            
-            // Days grid
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
-                ForEach(daysInMonth(), id: \.self) { date in
-                    if let date = date {
+
+            // Days
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 4) {
+                ForEach(Array(daysInMonth().enumerated()), id: \.offset) { _, date in
+                    if let date {
                         DayCell(
                             date: date,
                             isSelected: calendar.isDate(date, inSameDayAs: selectedDate),
                             isToday: calendar.isDateInToday(date),
-                            hasSessions: hasSessions(on: date)
+                            sessionColors: sessionColors(on: date)
                         )
                         .onTapGesture {
-                            withAnimation(.spring(response: 0.3)) {
-                                selectedDate = date
-                            }
+                            withAnimation(.spring(response: 0.25)) { selectedDate = date }
                         }
                     } else {
-                        Color.clear
-                            .aspectRatio(1, contentMode: .fit)
+                        Color.clear.aspectRatio(1, contentMode: .fit)
                     }
                 }
             }
         }
     }
-    
+
+    private func step(_ months: Int) {
+        withAnimation(.spring(response: 0.3)) {
+            currentMonth = calendar.date(byAdding: .month, value: months, to: currentMonth)!
+        }
+    }
+
     private func daysInMonth() -> [Date?] {
-        guard let monthInterval = calendar.dateInterval(of: .month, for: currentMonth),
-              let firstWeek = calendar.dateInterval(of: .weekOfMonth, for: monthInterval.start) else {
-            return []
+        guard let interval = calendar.dateInterval(of: .month, for: currentMonth) else { return [] }
+        let offset = calendar.component(.weekday, from: interval.start) - 1
+        var dates: [Date?] = Array(repeating: nil, count: offset)
+        var d = interval.start
+        while d < interval.end {
+            dates.append(d)
+            d = calendar.date(byAdding: .day, value: 1, to: d)!
         }
-        
-        var dates: [Date?] = []
-        var current = firstWeek.start
-        
-        // Fill leading empty days
-        let weekdayOffset = calendar.component(.weekday, from: monthInterval.start) - 1
-        dates.append(contentsOf: Array(repeating: nil, count: weekdayOffset))
-        
-        // Fill days of month
-        while current < monthInterval.end {
-            dates.append(current)
-            current = calendar.date(byAdding: .day, value: 1, to: current)!
-        }
-        
         return dates
     }
-    
-    private func hasSessions(on date: Date) -> Bool {
-        sessions.contains { session in
-            calendar.isDate(session.startTime, inSameDayAs: date)
-        }
+
+    private func sessionColors(on date: Date) -> [Color] {
+        let daySessions = sessions
+            .filter { calendar.isDate($0.startTime, inSameDayAs: date) }
+            .sorted { $0.duration > $1.duration }
+        return Array(daySessions.prefix(3).map { $0.activityTypeEnum.color })
     }
 }
+
+// MARK: - Day Cell
 
 struct DayCell: View {
     let date: Date
     let isSelected: Bool
     let isToday: Bool
-    let hasSessions: Bool
-    
+    let sessionColors: [Color]
+
     private let calendar = Calendar.current
-    
+    private let accent = Color(red: 0.95, green: 0.55, blue: 0.25)
+
     var body: some View {
-        Text("\(calendar.component(.day, from: date))")
-            .font(.body)
-            .fontWeight(isToday ? .bold : .regular)
-            .foregroundStyle(isToday ? .white : .primary)
-            .frame(maxWidth: .infinity, minHeight: 40)
-            .background(
-                Circle()
-                    .fill(backgroundColor)
-            )
-            .overlay(
-                Circle()
-                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
-            )
-            .overlay(
-                // Activity indicator dot
-                hasSessions ?
-                Circle()
-                    .fill(isToday ? .white : .blue)
-                    .frame(width: 6, height: 6)
-                    .offset(y: 12)
-                : nil
-            )
-    }
-    
-    private var backgroundColor: Color {
-        if isToday {
-            return .blue
-        } else if isSelected {
-            return .blue.opacity(0.2)
-        } else {
-            return .clear
+        VStack(spacing: 3) {
+            Text("\(calendar.component(.day, from: date))")
+                .font(.system(size: 15, weight: isToday ? .bold : .regular))
+                .foregroundStyle(.primary)
+                .frame(width: 34, height: 34)
+                .background(isSelected ? accent.opacity(0.15) : Color.clear, in: Circle())
+                .overlay(isToday ? Circle().stroke(accent, lineWidth: 2) : nil)
+
+            if !sessionColors.isEmpty {
+                HStack(spacing: 3) {
+                    ForEach(Array(sessionColors.enumerated()), id: \.offset) { _, color in
+                        Circle().fill(color).frame(width: 5, height: 5)
+                    }
+                }
+            } else {
+                Color.clear.frame(height: 5)
+            }
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 2)
     }
 }
 
-struct DayDetailView: View {
-    let date: Date
+// MARK: - Week Summary Strip
+
+struct WeekSummaryStrip: View {
+    let selectedDate: Date
     let sessions: [ActivitySession]
-    
-    private let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMMM d"
-        return formatter
-    }()
-    
+
+    private let calendar = Calendar.current
+
+    private var weekSessions: [ActivitySession] {
+        guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: selectedDate) else { return [] }
+        return sessions.filter { $0.startTime >= weekInterval.start && $0.startTime < weekInterval.end }
+    }
+
+    private var weekTotal: TimeInterval {
+        weekSessions.reduce(0) { $0 + $1.duration }
+    }
+
+    private struct CategorySlice: Identifiable {
+        let id = UUID()
+        let color: Color
+        let fraction: CGFloat
+    }
+
+    private var slices: [CategorySlice] {
+        guard weekTotal > 0 else { return [] }
+        let catColors: [ActivityCategory: Color] = [
+            .body: Color(red: 0.90, green: 0.30, blue: 0.30),
+            .mind: Color(red: 0.40, green: 0.40, blue: 0.70),
+            .life: Color(red: 0.40, green: 0.72, blue: 0.72),
+        ]
+        var totals: [ActivityCategory: TimeInterval] = [:]
+        for s in weekSessions {
+            totals[s.activityTypeEnum.category, default: 0] += s.duration
+        }
+        return totals.compactMap { cat, dur in
+            CategorySlice(color: catColors[cat] ?? .gray, fraction: CGFloat(dur / weekTotal))
+        }.sorted { $0.fraction > $1.fraction }
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(dateFormatter.string(from: date))
-                .font(.headline)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
-            
-            if sessions.isEmpty {
-                ContentUnavailableView(
-                    "No Activities",
-                    systemImage: "calendar.badge.exclamationmark",
-                    description: Text("No activities recorded for this day")
-                )
-            } else {
-                List {
-                    ForEach(sessions) { session in
-                        SessionRow(session: session)
+        if !weekSessions.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Week total: \(formatDuration(weekTotal))")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                GeometryReader { geo in
+                    HStack(spacing: 2) {
+                        ForEach(slices) { slice in
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(slice.color)
+                                .frame(width: max(4, (geo.size.width - CGFloat(slices.count - 1) * 2) * slice.fraction))
+                        }
                     }
                 }
-                .listStyle(.plain)
+                .frame(height: 4)
+            }
+            .padding(.vertical, 8)
+        }
+    }
+
+    private func formatDuration(_ t: TimeInterval) -> String {
+        let h = Int(t) / 3600, m = (Int(t) % 3600) / 60
+        return h > 0 ? "\(h)h \(m)m" : "\(m)m"
+    }
+}
+
+// MARK: - Day Sessions View
+
+struct DaySessionsView: View {
+    let date: Date
+    let sessions: [ActivitySession]
+    let onTap: (ActivitySession) -> Void
+
+    private var dateLabel: String {
+        if Calendar.current.isDateInToday(date) { return "Today" }
+        if Calendar.current.isDateInYesterday(date) { return "Yesterday" }
+        let f = DateFormatter(); f.dateFormat = "EEEE, MMMM d"; return f.string(from: date)
+    }
+
+    private var dayTotal: TimeInterval {
+        sessions.reduce(0) { $0 + $1.duration }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(dateLabel)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if !sessions.isEmpty {
+                    Text(formatDuration(dayTotal))
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if sessions.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "moon.zzz.fill")
+                        .font(.system(size: 36))
+                        .foregroundStyle(.quaternary)
+                    Text("Nothing tracked")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+            } else {
+                ForEach(sessions) { session in
+                    SessionRow(session: session)
+                        .onTapGesture { onTap(session) }
+                }
             }
         }
     }
+
+    private func formatDuration(_ t: TimeInterval) -> String {
+        let h = Int(t) / 3600, m = (Int(t) % 3600) / 60
+        return h > 0 ? "\(h)h \(m)m" : "\(m)m"
+    }
 }
+
+// MARK: - Session Row
 
 struct SessionRow: View {
     let session: ActivitySession
 
-    private var activityType: ActivityType {
-        session.activityTypeEnum
-    }
-
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: activityType.icon)
-                .font(.system(size: 16))
-                .foregroundStyle(activityType.color)
-                .frame(width: 32, height: 32)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(activityType.color.opacity(0.2))
-                )
+        HStack(spacing: 0) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(session.activityTypeEnum.color)
+                .frame(width: 3)
+                .padding(.vertical, 4)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(activityType.rawValue)
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.primary)
+            HStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(session.activityTypeEnum.color.opacity(0.12))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: session.activityTypeEnum.icon)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(session.activityTypeEnum.color)
+                }
 
-                Text(session.startTime, style: .date)
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(session.activityTypeEnum.rawValue)
+                        .font(.subheadline.weight(.semibold))
+                    if let summary = session.summary, !summary.isEmpty {
+                        Text(summary)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    } else {
+                        Text(session.formattedTimeRange)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                Text(session.compactDuration)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(session.activityTypeEnum.color)
             }
-
-            Spacer()
-
-            Text(formatDuration(session.duration))
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
         }
-        .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemBackground))
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+    }
+}
+
+// MARK: - Session Edit View
+
+struct SessionEditView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Bindable var session: ActivitySession
+    let onDelete: () -> Void
+
+    @State private var showDeleteConfirm = false
+    @FocusState private var isNotesFocused: Bool
+
+    private var notesBinding: Binding<String> {
+        Binding(
+            get: { session.summary ?? "" },
+            set: { session.summary = $0.isEmpty ? nil : $0 }
         )
     }
 
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let hours = Int(duration) / 3600
-        let minutes = (Int(duration) % 3600) / 60
-        if hours > 0 {
-            return String(format: "%dh %02dm", hours, minutes)
+    var body: some View {
+        NavigationStack {
+            List {
+                // Activity header
+                Section {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(session.activityTypeEnum.color.opacity(0.12))
+                                .frame(width: 48, height: 48)
+                            Image(systemName: session.activityTypeEnum.icon)
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(session.activityTypeEnum.color)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(session.activityTypeEnum.rawValue)
+                                .font(.headline)
+                            Text(session.compactDuration)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                // Times
+                Section("Time") {
+                    DatePicker("Start", selection: $session.startTime, displayedComponents: [.date, .hourAndMinute])
+                    if session.endTime != nil {
+                        DatePicker("End", selection: Binding(
+                            get: { session.endTime ?? Date() },
+                            set: { session.endTime = $0 }
+                        ), displayedComponents: [.date, .hourAndMinute])
+                    }
+                }
+
+                // Notes — full-height TextEditor inside the List
+                Section("Notes") {
+                    ZStack(alignment: .topLeading) {
+                        if notesBinding.wrappedValue.isEmpty {
+                            Text("Add notes…")
+                                .foregroundStyle(.tertiary)
+                                .font(.body)
+                                .padding(.top, 8)
+                                .allowsHitTesting(false)
+                        }
+                        TextEditor(text: notesBinding)
+                            .focused($isNotesFocused)
+                            .scrollContentBackground(.hidden)
+                            .frame(minHeight: 120)
+                            .padding(.vertical, 4)
+                    }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                }
+
+                // Delete
+                Section {
+                    Button(role: .destructive) {
+                        showDeleteConfirm = true
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text("Delete Session")
+                            Spacer()
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Edit Session")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        isNotesFocused = false
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        isNotesFocused = false
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+            .confirmationDialog("Delete this session?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                Button("Delete", role: .destructive) { onDelete(); dismiss() }
+                Button("Cancel", role: .cancel) {}
+            }
         }
-        return String(format: "%02dm", minutes)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 }
 

@@ -1,5 +1,4 @@
 // journal-app/journal-app/ViewModels/ActivityTrackerViewModel.swift
-// ViewModel for tracking activities
 
 import Foundation
 import SwiftData
@@ -11,170 +10,172 @@ class ActivityTrackerViewModel {
     var currentSession: ActivitySession?
     var elapsedTime: TimeInterval = 0
     private var timer: Timer?
-    
-    // Audio recording properties
+
+    // Confirmation flow
+    var pendingActivity: ActivityType?
+
+    // Audio recording
     private var audioRecorder: AVAudioRecorder?
-    private var audioSession: AVAudioSession?
     private var recordingURL: URL?
-    
     var isRecording = false
     var transcribedText = ""
     var isTranscribing = false
     var recordingError: String?
-    
+
+    // MARK: - Session Lifecycle
+
     func startActivity(_ type: ActivityType, modelContext: ModelContext) {
-        // End any existing session first
         if let session = currentSession {
             endSession(session, summary: nil, modelContext: modelContext)
         }
-        
         let session = ActivitySession(activityType: type)
         modelContext.insert(session)
         currentSession = session
-        
         startTimer()
-        
-        do {
-            try modelContext.save()
-        } catch {
-            print("Failed to save session: \(error)")
-        }
+        try? modelContext.save()
     }
-    
+
+    func confirmStart(modelContext: ModelContext) {
+        guard let type = pendingActivity else { return }
+        startActivity(type, modelContext: modelContext)
+        pendingActivity = nil
+    }
+
+    func cancelStart() {
+        pendingActivity = nil
+    }
+
     func endSession(_ session: ActivitySession, summary: String?, modelContext: ModelContext) {
         stopTimer()
-        
         session.endTime = Date()
         session.summary = summary
-        
         if session.id == currentSession?.id {
             currentSession = nil
             elapsedTime = 0
         }
-        
-        do {
-            try modelContext.save()
-        } catch {
-            print("Failed to save session: \(error)")
-        }
+        try? modelContext.save()
     }
-    
-    func stopCurrentSession(modelContext: ModelContext) {
+
+    func quickStop(modelContext: ModelContext) {
         if let session = currentSession {
             endSession(session, summary: nil, modelContext: modelContext)
         }
     }
-    
+
+    func stopCurrentSession(modelContext: ModelContext) {
+        quickStop(modelContext: modelContext)
+    }
+
+    // MARK: - Timer
+
+    var formattedDuration: String {
+        let total = Int(elapsedTime)
+        let h = total / 3600
+        let m = (total % 3600) / 60
+        let s = total % 60
+        if h > 0 {
+            return String(format: "%d:%02d:%02d", h, m, s)
+        }
+        return String(format: "%02d:%02d", m, s)
+    }
+
     private func startTimer() {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.updateElapsedTime()
+            guard let self, let session = self.currentSession else { return }
+            self.elapsedTime = Date().timeIntervalSince(session.startTime)
         }
     }
-    
+
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
     }
-    
-    private func updateElapsedTime() {
-        guard let session = currentSession else { return }
-        elapsedTime = Date().timeIntervalSince(session.startTime)
+
+    // MARK: - Audio
+
+    func resetAudioState() {
+        transcribedText = ""
+        recordingError = nil
+        isTranscribing = false
+        isRecording = false
+        audioRecorder?.stop()
+        audioRecorder = nil
+        recordingURL = nil
     }
-    
-    // MARK: - Audio Recording
-    
+
     func requestRecordingPermission() async -> Bool {
-        // Request microphone permission
-        let micStatus = await withCheckedContinuation { continuation in
+        let mic = await withCheckedContinuation { c in
             AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                continuation.resume(returning: granted)
+                c.resume(returning: granted)
             }
         }
-
-        // Request speech recognition permission
-        await withCheckedContinuation { continuation in
-            SFSpeechRecognizer.requestAuthorization { status in
-                continuation.resume()
-            }
+        await withCheckedContinuation { c in
+            SFSpeechRecognizer.requestAuthorization { _ in c.resume() }
         }
-
-        return micStatus
+        return mic
     }
-    
+
     func startRecording() {
         guard !isRecording else { return }
-        
-        let audioSession = AVAudioSession.sharedInstance()
-        
         do {
-            try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
-            try audioSession.setActive(true)
-            
-            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let audioFilename = documentsPath.appendingPathComponent("recording-\(UUID().uuidString).m4a")
-            recordingURL = audioFilename
-            
-            let settings: [String: Any] = [
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
+            try session.setActive(true)
+
+            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("rec-\(UUID().uuidString).m4a")
+            recordingURL = url
+
+            audioRecorder = try AVAudioRecorder(url: url, settings: [
                 AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
                 AVSampleRateKey: 44100,
                 AVNumberOfChannelsKey: 1,
                 AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-            ]
-            
-            audioRecorder = try AVAudioRecorder(url: audioFilename, settings: settings)
+            ])
             audioRecorder?.record()
             isRecording = true
             recordingError = nil
-            
         } catch {
-            recordingError = "Failed to start recording: \(error.localizedDescription)"
-            print("Recording error: \(error)")
+            recordingError = "Recording failed: \(error.localizedDescription)"
         }
     }
-    
+
     func stopRecording() {
         guard isRecording else { return }
-        
         audioRecorder?.stop()
+        audioRecorder = nil
         isRecording = false
-        
-        // Transcribe the recording
         if let url = recordingURL {
             transcribeAudio(url: url)
         }
     }
-    
+
     private func transcribeAudio(url: URL) {
         isTranscribing = true
-        
         guard let recognizer = SFSpeechRecognizer(), recognizer.isAvailable else {
-            transcribedText = "Speech recognition not available"
             isTranscribing = false
+            recordingError = "Speech recognition unavailable"
             return
         }
-        
-        let request = SFSpeechURLRecognitionRequest(url: url)
-        
-        recognizer.recognitionTask(with: request) { [weak self] result, error in
+        recognizer.recognitionTask(with: SFSpeechURLRecognitionRequest(url: url)) { [weak self] result, error in
             DispatchQueue.main.async {
                 self?.isTranscribing = false
-                
-                if let error = error {
-                    self?.transcribedText = "Transcription error: \(error.localizedDescription)"
-                    return
-                }
-                
                 if let result = result, result.isFinal {
-                    self?.transcribedText = result.bestTranscription.formattedString
+                    let text = result.bestTranscription.formattedString
+                    if let existing = self?.transcribedText, !existing.isEmpty {
+                        self?.transcribedText = existing + " " + text
+                    } else {
+                        self?.transcribedText = text
+                    }
+                } else if let error {
+                    self?.recordingError = error.localizedDescription
                 }
-                
-                // Clean up the audio file
                 try? FileManager.default.removeItem(at: url)
             }
         }
     }
-    
+
     deinit {
         stopTimer()
         audioRecorder?.stop()

@@ -15,6 +15,7 @@
 		AA00000B /* ActivitiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000A /* ActivitiesView.swift */; };
 		AA00000D /* SummaryDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000C /* SummaryDialogView.swift */; };
 		AA00000F /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000E /* CalendarView.swift */; };
+		AA000020 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000021 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 		AA00000C /* SummaryDialogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryDialogView.swift; sourceTree = "<group>"; };
 		AA00000E /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		AA000010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AA000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA100000 /* journal-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "journal-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -84,6 +86,7 @@
 				AA300000 /* Models */,
 				AA300001 /* ViewModels */,
 				AA300002 /* Views */,
+				AA000021 /* Assets.xcassets */,
 				AA000010 /* Info.plist */,
 			);
 			path = "journal-app";
@@ -106,6 +109,7 @@
 			buildPhases = (
 				AA100001 /* Sources */,
 				AA200000 /* Frameworks */,
+				AA300010 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -162,11 +166,21 @@
 				AA00000B /* ActivitiesView.swift in Sources */,
 				AA00000D /* SummaryDialogView.swift in Sources */,
 				AA00000F /* CalendarView.swift in Sources */,
-				AA000011 /* ControlCenterView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AA300010 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000020 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		AA500003 /* Debug */ = {

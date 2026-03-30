@@ -1,5 +1,4 @@
 // journal-app/journal-app/Models/ActivitySession.swift
-// SwiftData model for tracked activity sessions
 
 import Foundation
 import SwiftData
@@ -12,44 +11,54 @@ class ActivitySession {
     var startTime: Date
     var endTime: Date?
     var summary: String?
-    
+
     init(activityType: ActivityType, startTime: Date = Date()) {
         self.id = UUID()
         self.activityType = activityType.rawValue
         self.startTime = startTime
     }
-    
+
     var activityTypeEnum: ActivityType {
         ActivityType(rawValue: activityType) ?? .work
     }
-    
-    var icon: String {
-        activityTypeEnum.icon
-    }
-    
-    var color: Color {
-        activityTypeEnum.color
-    }
-    
+
+    var icon: String { activityTypeEnum.icon }
+    var color: Color { activityTypeEnum.color }
+
     var duration: TimeInterval {
         let end = endTime ?? Date()
         return end.timeIntervalSince(startTime)
     }
-    
-    var isActive: Bool {
-        endTime == nil
+
+    var isActive: Bool { endTime == nil }
+
+    var compactDuration: String {
+        let total = Int(duration)
+        let h = total / 3600
+        let m = (total % 3600) / 60
+        if h > 0 { return "\(h)h \(m)m" }
+        if m > 0 { return "\(m)m" }
+        return "< 1m"
     }
-    
+
     var formattedDuration: String {
-        let totalSeconds = Int(duration)
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
-        
-        if hours > 0 {
-            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            return String(format: "%d:%02d", minutes, seconds)
+        let total = Int(duration)
+        let h = total / 3600
+        let m = (total % 3600) / 60
+        let s = total % 60
+        if h > 0 {
+            return String(format: "%d:%02d:%02d", h, m, s)
         }
+        return String(format: "%d:%02d", m, s)
+    }
+
+    var formattedTimeRange: String {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        let start = f.string(from: startTime)
+        if let end = endTime {
+            return "\(start) – \(f.string(from: end))"
+        }
+        return "\(start) – now"
     }
 }

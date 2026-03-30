@@ -1,5 +1,4 @@
 // journal-app/journal-app/journal_appApp.swift
-// Main app entry point
 
 import SwiftUI
 import SwiftData
@@ -12,6 +11,7 @@ struct journal_appApp: App {
         WindowGroup {
             ContentView()
                 .environment(viewModel)
+                .tint(Color(red: 0.95, green: 0.55, blue: 0.25))
         }
         .modelContainer(for: [ActivitySession.self])
     }
