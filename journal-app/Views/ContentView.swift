@@ -73,10 +73,12 @@ struct ActiveSessionCard: View {
 
 struct ActiveSessionEditView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @Bindable var session: ActivitySession
     let viewModel: ActivityTrackerViewModel
     let onSave: () -> Void
 
+    @State private var confirmingCancel = false
     @FocusState private var isNotesFocused: Bool
 
     private var notesBinding: Binding<String> {
@@ -136,6 +138,37 @@ struct ActiveSessionEditView: View {
                             .padding(.vertical, 4)
                     }
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                }
+
+                Section {
+                    if confirmingCancel {
+                        HStack(spacing: 12) {
+                            Button("Keep Session") {
+                                withAnimation { confirmingCancel = false }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .buttonStyle(.bordered)
+
+                            Button("Yes, Cancel", role: .destructive) {
+                                viewModel.cancelSession(session, modelContext: modelContext)
+                                dismiss()
+                            }
+                            .frame(maxWidth: .infinity)
+                            .buttonStyle(.borderedProminent)
+                            .tint(.red)
+                        }
+                        .padding(.vertical, 2)
+                    } else {
+                        Button(role: .destructive) {
+                            withAnimation { confirmingCancel = true }
+                        } label: {
+                            HStack {
+                                Spacer()
+                                Text("Cancel Session")
+                                Spacer()
+                            }
+                        }
+                    }
                 }
             }
             .navigationTitle("In Progress")

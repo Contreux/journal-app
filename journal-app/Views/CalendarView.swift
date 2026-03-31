@@ -371,10 +371,13 @@ struct SessionRow: View {
 
 struct SessionEditView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Environment(ActivityTrackerViewModel.self) private var viewModel
     @Bindable var session: ActivitySession
     let onDelete: () -> Void
 
     @Query(sort: \CustomActivityType.sortOrder) private var customTypes: [CustomActivityType]
+    @State private var confirmingCancel = false
     @State private var confirmingDelete = false
     @State private var showingTypePicker = false
     @FocusState private var isNotesFocused: Bool
@@ -460,9 +463,41 @@ struct SessionEditView: View {
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 }
 
-                // Delete
+                // Cancel active session / delete completed session
                 Section {
-                    if confirmingDelete {
+                    if session.isActive {
+                        if confirmingCancel {
+                            HStack(spacing: 12) {
+                                Button("Keep Session") {
+                                    withAnimation { confirmingCancel = false }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .buttonStyle(.bordered)
+
+                                Button("Yes, Cancel", role: .destructive) {
+                                    viewModel.cancelSession(session, modelContext: modelContext)
+                                    dismiss()
+                                }
+                                .frame(maxWidth: .infinity)
+                                .buttonStyle(.borderedProminent)
+                                .tint(.red)
+                            }
+                            .padding(.vertical, 2)
+                        } else {
+                            Button(role: .destructive) {
+                                withAnimation {
+                                    confirmingDelete = false
+                                    confirmingCancel = true
+                                }
+                            } label: {
+                                HStack {
+                                    Spacer()
+                                    Text("Cancel Session")
+                                    Spacer()
+                                }
+                            }
+                        }
+                    } else if confirmingDelete {
                         HStack(spacing: 12) {
                             Button("Cancel") {
                                 withAnimation { confirmingDelete = false }

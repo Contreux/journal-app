@@ -72,6 +72,17 @@ class ActivityTrackerViewModel {
         quickStop(modelContext: modelContext)
     }
 
+    func cancelSession(_ session: ActivitySession, modelContext: ModelContext) {
+        if session.id == currentSession?.id {
+            stopTimer()
+            endLiveActivity()
+            currentSession = nil
+            elapsedTime = 0
+        }
+        modelContext.delete(session)
+        try? modelContext.save()
+    }
+
     // MARK: - Timer
 
     var formattedDuration: String {
