@@ -41,7 +41,7 @@ struct ActivitiesView: View {
                                             isPressed: false
                                         )
                                         .onTapGesture {
-                                            viewModel.pendingActivity = type
+                                            viewModel.startActivity(type, modelContext: modelContext)
                                         }
                                     }
                                 }
@@ -55,14 +55,6 @@ struct ActivitiesView: View {
                 }
                 .navigationTitle("Track")
 
-                // Confirmation overlay
-                if let type = viewModel.pendingActivity {
-                    ConfirmationOverlay(
-                        type: type,
-                        onStart: { viewModel.confirmStart(modelContext: modelContext) },
-                        onCancel: { viewModel.cancelStart() }
-                    )
-                }
             }
             .sheet(isPresented: $showingSummaryDialog) {
                 if let session = viewModel.currentSession {
