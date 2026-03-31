@@ -52,6 +52,16 @@ class ActivitySession {
         return String(format: "%d:%02d", m, s)
     }
 
+    func resolvedType(customTypes: [CustomActivityType]) -> (name: String, icon: String, color: Color) {
+        if let builtin = ActivityType(rawValue: activityType) {
+            return (builtin.rawValue, builtin.icon, builtin.color)
+        }
+        if let custom = customTypes.first(where: { $0.name == activityType }) {
+            return (custom.name, custom.symbol, custom.color)
+        }
+        return (activityType, "circle.fill", .gray)
+    }
+
     var formattedTimeRange: String {
         let f = DateFormatter()
         f.timeStyle = .short

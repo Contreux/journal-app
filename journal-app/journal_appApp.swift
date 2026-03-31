@@ -13,6 +13,6 @@ struct journal_appApp: App {
                 .environment(viewModel)
                 .tint(Color(red: 0.95, green: 0.55, blue: 0.25))
         }
-        .modelContainer(for: [ActivitySession.self])
+        .modelContainer(for: [ActivitySession.self, CustomActivityType.self])
     }
 }

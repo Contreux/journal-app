@@ -55,7 +55,6 @@ Activities are organized into three categories:
 
 ## TODO
 
-- [ ] Add the ability to add comments to an activity while it's running (it shouldn't have to be stopped to add a comment)
 - [ ] Add a widget so you can see the current session running
 - [ ] Add the ability to add new categories
 - [ ] Remove the Today page and replace with a smart "Quick Start" suggestion at the top of the Track page — learns from time-of-day patterns, only shows when no session is active

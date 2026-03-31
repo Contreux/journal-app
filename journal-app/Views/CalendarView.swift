@@ -6,6 +6,7 @@ import SwiftData
 struct CalendarView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \ActivitySession.startTime, order: .reverse) private var allSessions: [ActivitySession]
+    @Query(sort: \CustomActivityType.sortOrder) private var customTypes: [CustomActivityType]
 
     @State private var selectedDate: Date = Date()
     @State private var currentMonth: Date = Date()
@@ -18,22 +19,22 @@ struct CalendarView: View {
                     CalendarGridView(
                         currentMonth: $currentMonth,
                         selectedDate: $selectedDate,
-                        sessions: allSessions
+                        sessions: allSessions,
+                        customTypes: customTypes
                     )
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
 
-                    // Week summary
                     WeekSummaryStrip(selectedDate: selectedDate, sessions: allSessions)
                         .padding(.horizontal, 16)
                         .padding(.bottom, 8)
 
                     Divider().padding(.horizontal, 16)
 
-                    // Day sessions
                     DaySessionsView(
                         date: selectedDate,
-                        sessions: sessionsForDate(selectedDate)
+                        sessions: sessionsForDate(selectedDate),
+                        customTypes: customTypes
                     ) { session in
                         editingSession = session
                     }
@@ -62,6 +63,7 @@ struct CalendarGridView: View {
     @Binding var currentMonth: Date
     @Binding var selectedDate: Date
     let sessions: [ActivitySession]
+    var customTypes: [CustomActivityType] = []
 
     private let calendar = Calendar.current
     private let weekDays = ["S", "M", "T", "W", "T", "F", "S"]
@@ -146,7 +148,7 @@ struct CalendarGridView: View {
         let daySessions = sessions
             .filter { calendar.isDate($0.startTime, inSameDayAs: date) }
             .sorted { $0.duration > $1.duration }
-        return Array(daySessions.prefix(3).map { $0.activityTypeEnum.color })
+        return Array(daySessions.prefix(3).map { $0.resolvedType(customTypes: customTypes).color })
     }
 }
 
@@ -257,6 +259,7 @@ struct WeekSummaryStrip: View {
 struct DaySessionsView: View {
     let date: Date
     let sessions: [ActivitySession]
+    var customTypes: [CustomActivityType] = []
     let onTap: (ActivitySession) -> Void
 
     private var dateLabel: String {
@@ -296,7 +299,7 @@ struct DaySessionsView: View {
                 .padding(.vertical, 24)
             } else {
                 ForEach(sessions) { session in
-                    SessionRow(session: session)
+                    SessionRow(session: session, customTypes: customTypes)
                         .onTapGesture { onTap(session) }
                 }
             }
@@ -313,26 +316,28 @@ struct DaySessionsView: View {
 
 struct SessionRow: View {
     let session: ActivitySession
+    var customTypes: [CustomActivityType] = []
 
     var body: some View {
+        let resolved = session.resolvedType(customTypes: customTypes)
         HStack(spacing: 0) {
             RoundedRectangle(cornerRadius: 2)
-                .fill(session.activityTypeEnum.color)
+                .fill(resolved.color)
                 .frame(width: 3)
                 .padding(.vertical, 4)
 
             HStack(spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(session.activityTypeEnum.color.opacity(0.12))
+                        .fill(resolved.color.opacity(0.12))
                         .frame(width: 36, height: 36)
-                    Image(systemName: session.activityTypeEnum.icon)
+                    Image(systemName: resolved.icon)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(session.activityTypeEnum.color)
+                        .foregroundStyle(resolved.color)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(session.activityTypeEnum.rawValue)
+                    Text(resolved.name)
                         .font(.subheadline.weight(.semibold))
                     if let summary = session.summary, !summary.isEmpty {
                         Text(summary)
@@ -350,7 +355,7 @@ struct SessionRow: View {
 
                 Text(session.compactDuration)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(session.activityTypeEnum.color)
+                    .foregroundStyle(resolved.color)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
@@ -369,7 +374,7 @@ struct SessionEditView: View {
     @Bindable var session: ActivitySession
     let onDelete: () -> Void
 
-    @State private var showDeleteConfirm = false
+    @State private var confirmingDelete = false
     @FocusState private var isNotesFocused: Bool
 
     private var notesBinding: Binding<String> {
@@ -412,6 +417,12 @@ struct SessionEditView: View {
                             get: { session.endTime ?? Date() },
                             set: { session.endTime = $0 }
                         ), displayedComponents: [.date, .hourAndMinute])
+                    } else {
+                        Button {
+                            session.endTime = Date()
+                        } label: {
+                            Label("Add End Time", systemImage: "plus.circle")
+                        }
                     }
                 }
 
@@ -436,13 +447,32 @@ struct SessionEditView: View {
 
                 // Delete
                 Section {
-                    Button(role: .destructive) {
-                        showDeleteConfirm = true
-                    } label: {
-                        HStack {
-                            Spacer()
-                            Text("Delete Session")
-                            Spacer()
+                    if confirmingDelete {
+                        HStack(spacing: 12) {
+                            Button("Cancel") {
+                                withAnimation { confirmingDelete = false }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .buttonStyle(.bordered)
+
+                            Button("Yes, Delete", role: .destructive) {
+                                onDelete()
+                                dismiss()
+                            }
+                            .frame(maxWidth: .infinity)
+                            .buttonStyle(.borderedProminent)
+                            .tint(.red)
+                        }
+                        .padding(.vertical, 2)
+                    } else {
+                        Button(role: .destructive) {
+                            withAnimation { confirmingDelete = true }
+                        } label: {
+                            HStack {
+                                Spacer()
+                                Text("Delete Session")
+                                Spacer()
+                            }
                         }
                     }
                 }
@@ -464,10 +494,6 @@ struct SessionEditView: View {
                     }
                     .fontWeight(.semibold)
                 }
-            }
-            .confirmationDialog("Delete this session?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-                Button("Delete", role: .destructive) { onDelete(); dismiss() }
-                Button("Cancel", role: .cancel) {}
             }
         }
         .presentationDetents([.medium, .large])
