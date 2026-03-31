@@ -4,6 +4,7 @@ import Foundation
 import SwiftData
 import AVFoundation
 import Speech
+import ActivityKit
 
 @Observable
 class ActivityTrackerViewModel {
@@ -13,6 +14,9 @@ class ActivityTrackerViewModel {
 
     // Confirmation flow
     var pendingActivity: ActivityType?
+
+    // Live Activity
+    private var liveActivity: Activity<JournalActivityAttributes>?
 
     // Audio recording
     private var audioRecorder: AVAudioRecorder?
@@ -32,6 +36,7 @@ class ActivityTrackerViewModel {
         modelContext.insert(session)
         currentSession = session
         startTimer()
+        startLiveActivity(name: type.rawValue, icon: type.icon, colorHex: type.color.hexString)
         try? modelContext.save()
     }
 
@@ -47,6 +52,7 @@ class ActivityTrackerViewModel {
 
     func endSession(_ session: ActivitySession, summary: String?, modelContext: ModelContext) {
         stopTimer()
+        endLiveActivity()
         session.endTime = Date()
         session.summary = summary
         if session.id == currentSession?.id {
@@ -84,12 +90,45 @@ class ActivityTrackerViewModel {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self, let session = self.currentSession else { return }
             self.elapsedTime = Date().timeIntervalSince(session.startTime)
+            // Update live activity every 30s to save battery
+            if Int(self.elapsedTime) % 30 == 0 {
+                self.updateLiveActivity(elapsed: Int(self.elapsedTime))
+            }
         }
     }
 
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
+    }
+
+    // MARK: - Live Activity
+
+    private func startLiveActivity(name: String, icon: String, colorHex: String) {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        let attributes = JournalActivityAttributes(activityName: name, activityIcon: icon, colorHex: colorHex)
+        let state = JournalActivityAttributes.ContentState(elapsedSeconds: 0)
+        let content = ActivityContent(state: state, staleDate: nil)
+        do {
+            liveActivity = try Activity.request(attributes: attributes, content: content)
+        } catch {
+            print("Live activity error: \(error)")
+        }
+    }
+
+    private func updateLiveActivity(elapsed: Int) {
+        guard let activity = liveActivity else { return }
+        let state = JournalActivityAttributes.ContentState(elapsedSeconds: elapsed)
+        let content = ActivityContent(state: state, staleDate: nil)
+        Task { await activity.update(content) }
+    }
+
+    private func endLiveActivity() {
+        guard let activity = liveActivity else { return }
+        Task {
+            await activity.end(nil, dismissalPolicy: .immediate)
+        }
+        liveActivity = nil
     }
 
     // MARK: - Audio

@@ -374,7 +374,9 @@ struct SessionEditView: View {
     @Bindable var session: ActivitySession
     let onDelete: () -> Void
 
+    @Query(sort: \CustomActivityType.sortOrder) private var customTypes: [CustomActivityType]
     @State private var confirmingDelete = false
+    @State private var showingTypePicker = false
     @FocusState private var isNotesFocused: Bool
 
     private var notesBinding: Binding<String> {
@@ -384,29 +386,42 @@ struct SessionEditView: View {
         )
     }
 
+    private var resolved: (name: String, icon: String, color: Color) {
+        session.resolvedType(customTypes: customTypes)
+    }
+
     var body: some View {
         NavigationStack {
             List {
-                // Activity header
+                // Activity header — tappable to change type
                 Section {
-                    HStack(spacing: 14) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(session.activityTypeEnum.color.opacity(0.12))
-                                .frame(width: 48, height: 48)
-                            Image(systemName: session.activityTypeEnum.icon)
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(session.activityTypeEnum.color)
-                        }
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(session.activityTypeEnum.rawValue)
-                                .font(.headline)
-                            Text(session.compactDuration)
-                                .font(.subheadline)
+                    Button {
+                        showingTypePicker = true
+                    } label: {
+                        HStack(spacing: 14) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(resolved.color.opacity(0.12))
+                                    .frame(width: 48, height: 48)
+                                Image(systemName: resolved.icon)
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(resolved.color)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(resolved.name)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                Text(session.compactDuration)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption.weight(.semibold))
                                 .foregroundStyle(.secondary)
                         }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
                 }
 
                 // Times
@@ -496,8 +511,68 @@ struct SessionEditView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingTypePicker) {
+            SessionTypePickerView(customTypes: customTypes) { name in
+                session.activityType = name
+                showingTypePicker = false
+            }
+        }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+    }
+}
+
+// MARK: - Session Type Picker
+
+struct SessionTypePickerView: View {
+    let customTypes: [CustomActivityType]
+    let onSelect: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(ActivityType.grouped, id: \.category) { group in
+                    let catCustom = customTypes.filter { $0.category == group.category }
+                    Section(group.category.rawValue) {
+                        ForEach(group.types) { type in
+                            typeRow(name: type.rawValue, icon: type.icon, color: type.color)
+                        }
+                        ForEach(catCustom) { custom in
+                            typeRow(name: custom.name, icon: custom.symbol, color: custom.color)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Change Activity")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func typeRow(name: String, icon: String, color: Color) -> some View {
+        Button {
+            onSelect(name)
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(color.opacity(0.12))
+                        .frame(width: 34, height: 34)
+                    Image(systemName: icon)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(color)
+                }
+                Text(name)
+                    .foregroundStyle(.primary)
+            }
+        }
     }
 }
 

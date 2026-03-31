@@ -16,6 +16,10 @@
 		AA00000D /* SummaryDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000C /* SummaryDialogView.swift */; };
 		AA00000F /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000E /* CalendarView.swift */; };
 		AA000020 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000021 /* Assets.xcassets */; };
+		BB200001 /* JournalActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100001 /* JournalActivityAttributes.swift */; };
+		BB200002 /* JournalActivityAttributes.swift in Widget Sources */ = {isa = PBXBuildFile; fileRef = BB100001 /* JournalActivityAttributes.swift */; };
+		BB200003 /* JournalWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100002 /* JournalWidget.swift */; };
+		BB200004 /* journal-app-widget.appex in Embed Extensions */ = {isa = PBXBuildFile; fileRef = BB100004 /* journal-app-widget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +33,10 @@
 		AA00000E /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		AA000010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BB100001 /* JournalActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalActivityAttributes.swift; sourceTree = "<group>"; };
+		BB100002 /* JournalWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalWidget.swift; sourceTree = "<group>"; };
+		BB100003 /* journal-app-widget Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BB100004 /* journal-app-widget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "journal-app-widget.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA100000 /* journal-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "journal-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -48,6 +56,7 @@
 			children = (
 				AA000002 /* ActivityType.swift */,
 				AA000004 /* ActivitySession.swift */,
+				BB100001 /* JournalActivityAttributes.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -75,6 +84,7 @@
 			isa = PBXGroup;
 			children = (
 				AA300004 /* journal-app */,
+				BB700001 /* journal-app-widget */,
 				AA300005 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -96,8 +106,18 @@
 			isa = PBXGroup;
 			children = (
 				AA100000 /* journal-app.app */,
+				BB100004 /* journal-app-widget.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		BB700001 /* journal-app-widget */ = {
+			isa = PBXGroup;
+			children = (
+				BB100002 /* JournalWidget.swift */,
+				BB100003 /* journal-app-widget Info.plist */,
+			);
+			path = "journal-app-widget";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -110,6 +130,7 @@
 				AA100001 /* Sources */,
 				AA200000 /* Frameworks */,
 				AA300010 /* Resources */,
+				BB300002 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -119,6 +140,21 @@
 			productName = "journal-app";
 			productReference = AA100000 /* journal-app.app */;
 			productType = "com.apple.product-type.application";
+		};
+		BB400001 /* journal-app-widget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB500003 /* Build configuration list for PBXNativeTarget "journal-app-widget" */;
+			buildPhases = (
+				BB300001 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "journal-app-widget";
+			productName = "journal-app-widget";
+			productReference = BB100004 /* journal-app-widget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -149,6 +185,7 @@
 			projectRoot = "";
 			targets = (
 				AA400000 /* journal-app */,
+				BB400001 /* journal-app-widget */,
 			);
 		};
 /* End PBXProject section */
@@ -166,10 +203,34 @@
 				AA00000B /* ActivitiesView.swift in Sources */,
 				AA00000D /* SummaryDialogView.swift in Sources */,
 				AA00000F /* CalendarView.swift in Sources */,
+				BB200001 /* JournalActivityAttributes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB300001 /* Widget Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB200002 /* JournalActivityAttributes.swift in Widget Sources */,
+				BB200003 /* JournalWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		BB300002 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				BB200004 /* journal-app-widget.appex in Embed Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXResourcesBuildPhase section */
 		AA300010 /* Resources */ = {
@@ -364,6 +425,52 @@
 			};
 			name = Release;
 		};
+		BB500001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 34STU5HY7K;
+				INFOPLIST_FILE = "journal-app-widget/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.yourname.journal-app.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BB500002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 34STU5HY7K;
+				INFOPLIST_FILE = "journal-app-widget/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.yourname.journal-app.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -381,6 +488,15 @@
 			buildConfigurations = (
 				AA500003 /* Debug */,
 				AA500004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB500003 /* Build configuration list for PBXNativeTarget "journal-app-widget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB500001 /* Debug */,
+				BB500002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

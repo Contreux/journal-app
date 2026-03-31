@@ -56,8 +56,5 @@ Activities are organized into three categories:
 ## TODO
 
 - [ ] Add a widget so you can see the current session running
-- [ ] Add the ability to add new categories
-- [ ] Remove the Today page and replace with a smart "Quick Start" suggestion at the top of the Track page — learns from time-of-day patterns, only shows when no session is active
 - [ ] Add meeting transcription: Record button on active session card → transcribe via ElevenLabs (cheap model) on session end → append to notes with speaker labels
-- [ ] When ending a session, automatically prompt for notes by opening the activity in a dialog
 - [ ] Add a live activity notification (like Uber) that shows on the Lock Screen and Dynamic Island while tracking
