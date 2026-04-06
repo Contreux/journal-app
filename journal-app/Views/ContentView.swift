@@ -127,7 +127,7 @@ struct ActiveSessionEditView: View {
                 Section("Notes") {
                     VStack(alignment: .leading, spacing: 12) {
                         ZStack(alignment: .topLeading) {
-                            if notesBinding.wrappedValue.isEmpty {
+                            if notesBinding.wrappedValue.isEmpty && !isNotesFocused {
                                 Text("Add notes while you work…")
                                     .foregroundStyle(.tertiary)
                                     .font(.body)
@@ -191,6 +191,8 @@ struct ActiveSessionEditView: View {
                     Spacer()
                     Button("Done") { isNotesFocused = false }
                         .fontWeight(.semibold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
                 }
             }
         }
