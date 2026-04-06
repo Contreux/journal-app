@@ -81,7 +81,6 @@ struct ActiveSessionEditView: View {
     let onSave: () -> Void
 
     @State private var confirmingCancel = false
-    @State private var showingPermissionAlert = false
     @FocusState private var isNotesFocused: Bool
 
     private var notesBinding: Binding<String> {
@@ -89,10 +88,6 @@ struct ActiveSessionEditView: View {
             get: { session.summary ?? "" },
             set: { session.summary = $0.isEmpty ? nil : $0 }
         )
-    }
-    
-    private var isBusy: Bool {
-        viewModel.isRecording
     }
 
     var body: some View {
@@ -146,35 +141,6 @@ struct ActiveSessionEditView: View {
                                 .padding(.vertical, 4)
                         }
 
-                        HStack(spacing: 12) {
-                            Button {
-                                Task {
-                                    let granted = await viewModel.requestRecordingPermission()
-                                    if granted {
-                                        isNotesFocused = false
-                                        viewModel.isRecording ? viewModel.stopRecording() : viewModel.startRecording()
-                                    } else {
-                                        showingPermissionAlert = true
-                                    }
-                                }
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: viewModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                                    Text(viewModel.isRecording ? "Stop Recording" : "Voice Note")
-                                }
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(viewModel.isRecording ? .red : .secondary)
-                            }
-                            .buttonStyle(.plain)
-
-                            Spacer()
-
-                            if viewModel.isRecording {
-                                Text("Recording…")
-                                    .font(.caption)
-                                    .foregroundStyle(.red)
-                            }
-                        }
                     }
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 }
@@ -220,7 +186,6 @@ struct ActiveSessionEditView: View {
                         dismiss()
                     }
                     .fontWeight(.semibold)
-                    .disabled(isBusy)
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
@@ -231,17 +196,6 @@ struct ActiveSessionEditView: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .onDisappear { viewModel.resetAudioState() }
-        .alert("Permission Required", isPresented: $showingPermissionAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Open Settings") {
-                if let url = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(url)
-                }
-            }
-        } message: {
-            Text("Enable microphone access in Settings.")
-        }
     }
 }
 

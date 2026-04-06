@@ -376,7 +376,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "journal-app/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Journal;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access to record voice summaries of your activities.";
+				
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
@@ -410,7 +410,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "journal-app/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Journal;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access to record voice summaries of your activities.";
+				
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;

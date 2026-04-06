@@ -9,13 +9,8 @@ struct SummaryDialogView: View {
     let onCancel: () -> Void
 
     @State private var summaryText = ""
-    @State private var showingPermissionAlert = false
     @FocusState private var isTextFocused: Bool
     @State private var selectedDetent: PresentationDetent = .large
-    
-    private var isBusy: Bool {
-        viewModel.isRecording
-    }
 
     var body: some View {
         NavigationStack {
@@ -43,11 +38,9 @@ struct SummaryDialogView: View {
 
                     Button("Done") {
                         isTextFocused = false
-                        if viewModel.isRecording { viewModel.stopRecording() }
                         onSave(summaryText)
                     }
                     .font(.body.weight(.semibold))
-                    .disabled(isBusy)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
@@ -70,36 +63,6 @@ struct SummaryDialogView: View {
                                 .scrollContentBackground(.hidden)
                                 .frame(minHeight: 200)
                         }
-
-                        HStack(spacing: 12) {
-                            Button {
-                                Task {
-                                    let granted = await viewModel.requestRecordingPermission()
-                                    if granted {
-                                        isTextFocused = false
-                                        viewModel.isRecording ? viewModel.stopRecording() : viewModel.startRecording()
-                                    } else {
-                                        showingPermissionAlert = true
-                                    }
-                                }
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: viewModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                                    Text(viewModel.isRecording ? "Stop Recording" : "Voice Note")
-                                }
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(viewModel.isRecording ? .red : .secondary)
-                            }
-                            .buttonStyle(.plain)
-
-                            Spacer()
-
-                            if viewModel.isRecording {
-                                Text("Recording…")
-                                    .font(.caption)
-                                    .foregroundStyle(.red)
-                            }
-                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
@@ -113,38 +76,22 @@ struct SummaryDialogView: View {
                     isTextFocused = true
                 }
             }
-            .onDisappear { viewModel.resetAudioState() }
-            .interactiveDismissDisabled(isBusy)
             .presentationDetents([.medium, .large], selection: $selectedDetent)
             .presentationDragIndicator(.visible)
-            .alert("Permission Required", isPresented: $showingPermissionAlert) {
-                Button("Cancel", role: .cancel) {}
-                Button("Open Settings") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(url)
-                    }
-                }
-            } message: {
-                Text("Enable microphone access in Settings.")
-            }
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button("Skip") {
                         isTextFocused = false
-                        if viewModel.isRecording { viewModel.stopRecording() }
                         onSave("")
                     }
                     .foregroundStyle(.secondary)
-                    .disabled(isBusy)
 
                     Button("Done") {
                         isTextFocused = false
-                        if viewModel.isRecording { viewModel.stopRecording() }
                         onSave(summaryText)
                     }
                     .fontWeight(.semibold)
-                    .disabled(isBusy)
                 }
             }
         }

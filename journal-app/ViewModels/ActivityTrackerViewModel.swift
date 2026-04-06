@@ -2,7 +2,6 @@
 
 import Foundation
 import SwiftData
-import AVFoundation
 import ActivityKit
 
 @Observable
@@ -16,14 +15,6 @@ class ActivityTrackerViewModel {
 
     // Live Activity
     private var liveActivity: Activity<JournalActivityAttributes>?
-
-    // Audio recording
-    private var audioRecorder: AVAudioRecorder?
-    private var recordingURL: URL?
-    var isRecording = false
-    var transcribedText = ""
-    var isTranscribing = false
-    var recordingError: String?
 
     // MARK: - Session Lifecycle
 
@@ -166,65 +157,7 @@ class ActivityTrackerViewModel {
         liveActivity = nil
     }
 
-    // MARK: - Audio
-
-    func resetAudioState() {
-        transcribedText = ""
-        recordingError = nil
-        isTranscribing = false
-        isRecording = false
-        audioRecorder?.stop()
-        audioRecorder = nil
-        recordingURL = nil
-    }
-
-    func requestRecordingPermission() async -> Bool {
-        await withCheckedContinuation { c in
-            AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                c.resume(returning: granted)
-            }
-        }
-    }
-
-    func startRecording() {
-        guard !isRecording, !isTranscribing else { return }
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
-            try session.setActive(true)
-
-            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-                .appendingPathComponent("rec-\(UUID().uuidString).m4a")
-            recordingURL = url
-
-            audioRecorder = try AVAudioRecorder(url: url, settings: [
-                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-                AVSampleRateKey: 44100,
-                AVNumberOfChannelsKey: 1,
-                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-            ])
-            audioRecorder?.record()
-            transcribedText = ""
-            isRecording = true
-            recordingError = nil
-        } catch {
-            recordingError = "Recording failed: \(error.localizedDescription)"
-        }
-    }
-
-    func stopRecording() {
-        guard isRecording else { return }
-        audioRecorder?.stop()
-        audioRecorder = nil
-        isRecording = false
-        if let url = recordingURL {
-            try? FileManager.default.removeItem(at: url)
-            recordingURL = nil
-        }
-    }
-
     deinit {
         stopTimer()
-        audioRecorder?.stop()
     }
 }
