@@ -12,6 +12,10 @@ struct SummaryDialogView: View {
     @State private var showingPermissionAlert = false
     @FocusState private var isTextFocused: Bool
     @State private var selectedDetent: PresentationDetent = .large
+    
+    private var isBusy: Bool {
+        viewModel.isRecording
+    }
 
     var body: some View {
         NavigationStack {
@@ -43,7 +47,7 @@ struct SummaryDialogView: View {
                         onSave(summaryText)
                     }
                     .font(.body.weight(.semibold))
-                    .disabled(viewModel.isTranscribing)
+                    .disabled(isBusy)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
@@ -52,82 +56,56 @@ struct SummaryDialogView: View {
 
                 // Scrollable text area — fills all available space
                 ScrollView {
-                    ZStack(alignment: .topLeading) {
-                        if summaryText.isEmpty {
-                            Text("How did it go?")
-                                .foregroundStyle(.tertiary)
-                                .font(.body)
-                                .padding(.top, 2)
-                                .allowsHitTesting(false)
-                        }
-                        TextEditor(text: $summaryText)
-                            .focused($isTextFocused)
-                            .scrollContentBackground(.hidden)
-                            .frame(minHeight: 200)
-                            .toolbar {
-                                ToolbarItemGroup(placement: .keyboard) {
-                                    // Voice recording
-                                    Button {
-                                        Task {
-                                            let granted = await viewModel.requestRecordingPermission()
-                                            if granted {
-                                                viewModel.isRecording ? viewModel.stopRecording() : viewModel.startRecording()
-                                            } else {
-                                                showingPermissionAlert = true
-                                            }
-                                        }
-                                    } label: {
-                                        if viewModel.isTranscribing {
-                                            ProgressView().scaleEffect(0.8)
-                                        } else {
-                                            Image(systemName: viewModel.isRecording ? "stop.circle.fill" : "mic.circle")
-                                                .font(.system(size: 22))
-                                                .foregroundStyle(viewModel.isRecording ? .red : .secondary)
-                                        }
-                                    }
-
-                                    if viewModel.isRecording {
-                                        Text("Recording…")
-                                            .font(.caption)
-                                            .foregroundStyle(.red)
-                                    } else if viewModel.isTranscribing {
-                                        Text("Transcribing…")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-
-                                    Spacer()
-
-                                    Button("Skip") {
-                                        isTextFocused = false
-                                        if viewModel.isRecording { viewModel.stopRecording() }
-                                        onSave("")
-                                    }
-                                    .foregroundStyle(.secondary)
-
-                                    Button("Done") {
-                                        isTextFocused = false
-                                        if viewModel.isRecording { viewModel.stopRecording() }
-                                        onSave(summaryText)
-                                    }
-                                    .fontWeight(.semibold)
-                                    .disabled(viewModel.isTranscribing)
-                                }
+                    VStack(alignment: .leading, spacing: 14) {
+                        ZStack(alignment: .topLeading) {
+                            if summaryText.isEmpty {
+                                Text("How did it go?")
+                                    .foregroundStyle(.tertiary)
+                                    .font(.body)
+                                    .padding(.top, 2)
+                                    .allowsHitTesting(false)
                             }
+                            TextEditor(text: $summaryText)
+                                .focused($isTextFocused)
+                                .scrollContentBackground(.hidden)
+                                .frame(minHeight: 200)
+                        }
+
+                        HStack(spacing: 12) {
+                            Button {
+                                Task {
+                                    let granted = await viewModel.requestRecordingPermission()
+                                    if granted {
+                                        isTextFocused = false
+                                        viewModel.isRecording ? viewModel.stopRecording() : viewModel.startRecording()
+                                    } else {
+                                        showingPermissionAlert = true
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: viewModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
+                                    Text(viewModel.isRecording ? "Stop Recording" : "Voice Note")
+                                }
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(viewModel.isRecording ? .red : .secondary)
+                            }
+                            .buttonStyle(.plain)
+
+                            Spacer()
+
+                            if viewModel.isRecording {
+                                Text("Recording…")
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                            }
+                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
                     .padding(.bottom, 8)
                 }
 
-                // Recording error (outside keyboard)
-                if let error = viewModel.recordingError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 8)
-                }
             }
             .navigationBarHidden(true)
             .onAppear {
@@ -136,11 +114,7 @@ struct SummaryDialogView: View {
                 }
             }
             .onDisappear { viewModel.resetAudioState() }
-            .onChange(of: viewModel.transcribedText) { _, newValue in
-                guard !newValue.isEmpty else { return }
-                summaryText = summaryText.isEmpty ? newValue : summaryText + " " + newValue
-            }
-            .interactiveDismissDisabled(viewModel.isRecording)
+            .interactiveDismissDisabled(isBusy)
             .presentationDetents([.medium, .large], selection: $selectedDetent)
             .presentationDragIndicator(.visible)
             .alert("Permission Required", isPresented: $showingPermissionAlert) {
@@ -151,7 +125,27 @@ struct SummaryDialogView: View {
                     }
                 }
             } message: {
-                Text("Enable microphone and speech recognition in Settings.")
+                Text("Enable microphone access in Settings.")
+            }
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Skip") {
+                        isTextFocused = false
+                        if viewModel.isRecording { viewModel.stopRecording() }
+                        onSave("")
+                    }
+                    .foregroundStyle(.secondary)
+                    .disabled(isBusy)
+
+                    Button("Done") {
+                        isTextFocused = false
+                        if viewModel.isRecording { viewModel.stopRecording() }
+                        onSave(summaryText)
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(isBusy)
+                }
             }
         }
     }

@@ -191,6 +191,7 @@ struct ActivitiesView: View {
                 if session.endTime == nil, session.id == viewModel.currentSession?.id {
                     ActiveSessionEditView(session: session, viewModel: viewModel) {
                         try? modelContext.save()
+                        viewModel.syncCurrentSessionLiveActivity()
                     }
                 } else {
                     SessionEditView(session: session) {

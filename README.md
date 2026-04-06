@@ -9,7 +9,7 @@ An iOS app for tracking daily activities with a clean, modern interface. Built w
 - **Today View**: See your active session, completed sessions, and daily totals at a glance
 - **Activity Grid**: Browse activities organized by category (Body, Mind, Life)
 - **Calendar View**: Browse your activity history by day in a monthly calendar view
-- **Voice Summaries**: Record voice memos that are transcribed to text using on-device speech recognition
+- **Voice Notes**: Record voice memos to capture thoughts quickly
 - **Session Notes**: Add notes to activities anytime — while running or after completion
 - **Local Storage**: All data stored locally using SwiftData
 
@@ -29,14 +29,12 @@ An iOS app for tracking daily activities with a clean, modern interface. Built w
 ## Permissions
 
 The app requires:
-- **Microphone**: To record voice summaries
-- **Speech Recognition**: To transcribe recordings to text
+- **Microphone**: To record voice memos
 
 ## Architecture
 
 - **SwiftUI** for the UI with iOS 26 design patterns
 - **SwiftData** for local persistence
-- **Speech Framework** for on-device transcription (no network required)
 - **AVFoundation** for audio recording
 - **Observation** framework for state management
 
@@ -56,5 +54,5 @@ Activities are organized into three categories:
 ## TODO
 
 - [ ] Add a widget so you can see the current session running
-- [ ] Add meeting transcription: Record button on active session card → transcribe via ElevenLabs (cheap model) on session end → append to notes with speaker labels
+- [ ] Add meeting transcription: Record button on active session card → transcribe via native speech recognition → append to notes
 - [ ] Add a live activity notification (like Uber) that shows on the Lock Screen and Dynamic Island while tracking

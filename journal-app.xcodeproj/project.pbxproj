@@ -17,10 +17,24 @@
 		AA00000F /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000E /* CalendarView.swift */; };
 		AA000020 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA000021 /* Assets.xcassets */; };
 		BB200001 /* JournalActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100001 /* JournalActivityAttributes.swift */; };
-		BB200002 /* JournalActivityAttributes.swift in Widget Sources */ = {isa = PBXBuildFile; fileRef = BB100001 /* JournalActivityAttributes.swift */; };
+		BB200002 /* JournalActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100001 /* JournalActivityAttributes.swift */; };
 		BB200003 /* JournalWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100002 /* JournalWidget.swift */; };
-		BB200004 /* journal-app-widget.appex in Embed Extensions */ = {isa = PBXBuildFile; fileRef = BB100004 /* journal-app-widget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BB200004 /* journal-app-widget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BB100004 /* journal-app-widget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		BB300002 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				BB200004 /* journal-app-widget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		AA000000 /* journal_appApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = journal_appApp.swift; sourceTree = "<group>"; };
@@ -33,11 +47,11 @@
 		AA00000E /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		AA000010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA000021 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA100000 /* journal-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "journal-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB100001 /* JournalActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalActivityAttributes.swift; sourceTree = "<group>"; };
 		BB100002 /* JournalWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalWidget.swift; sourceTree = "<group>"; };
-		BB100003 /* journal-app-widget Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BB100003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BB100004 /* journal-app-widget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "journal-app-widget.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
-		AA100000 /* journal-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "journal-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,7 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				BB100002 /* JournalWidget.swift */,
-				BB100003 /* journal-app-widget Info.plist */,
+				BB100003 /* Info.plist */,
 			);
 			path = "journal-app-widget";
 			sourceTree = "<group>";
@@ -190,6 +204,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		AA300010 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000020 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		AA100001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -207,41 +232,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		BB300001 /* Widget Sources */ = {
+		BB300001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BB200002 /* JournalActivityAttributes.swift in Widget Sources */,
+				BB200002 /* JournalActivityAttributes.swift in Sources */,
 				BB200003 /* JournalWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		BB300002 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				BB200004 /* journal-app-widget.appex in Embed Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
-/* Begin PBXResourcesBuildPhase section */
-		AA300010 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				AA000020 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		AA500003 /* Debug */ = {
@@ -375,9 +375,12 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "journal-app/Info.plist";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Journal;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access to record voice summaries of your activities.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -406,9 +409,12 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "journal-app/Info.plist";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Journal;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs microphone access to record voice summaries of your activities.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;

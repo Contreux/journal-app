@@ -6,7 +6,7 @@ import SwiftUI
 
 struct JournalActivityAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        var elapsedSeconds: Int
+        var startTime: Date
     }
 
     var activityName: String

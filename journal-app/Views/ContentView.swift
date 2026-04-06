@@ -25,34 +25,36 @@ struct ActiveSessionCard: View {
     let onNote: () -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
-            // Tappable left side — opens edit sheet
-            Button(action: onTap) {
-                HStack(spacing: 14) {
-                    ZStack {
-                        Circle()
-                            .fill(session.activityTypeEnum.color.opacity(0.15))
-                            .frame(width: 52, height: 52)
-                        Image(systemName: session.activityTypeEnum.icon)
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(session.activityTypeEnum.color)
-                    }
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(session.activityTypeEnum.rawValue)
-                            .font(.headline)
-                            .foregroundStyle(.primary)
-                        Text(elapsed)
-                            .font(.system(size: 28, weight: .light, design: .rounded))
-                            .foregroundStyle(.primary)
-                            .monospacedDigit()
-                    }
+        Button(action: onTap) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(session.activityTypeEnum.color.opacity(0.15))
+                        .frame(width: 52, height: 52)
+                    Image(systemName: session.activityTypeEnum.icon)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(session.activityTypeEnum.color)
                 }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(session.activityTypeEnum.rawValue)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text(elapsed)
+                        .font(.system(size: 28, weight: .light, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .monospacedDigit()
+                }
+
+                Spacer(minLength: 0)
             }
-            .buttonStyle(.plain)
-
-            Spacer()
-
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.trailing, 60)
+            .padding(16)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .overlay(alignment: .trailing) {
             Button(action: onStop) {
                 Image(systemName: "stop.fill")
                     .font(.system(size: 16, weight: .semibold))
@@ -60,8 +62,8 @@ struct ActiveSessionCard: View {
                     .frame(width: 44, height: 44)
                     .background(session.activityTypeEnum.color, in: Circle())
             }
+            .padding(.trailing, 16)
         }
-        .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(session.activityTypeEnum.color.opacity(0.08))
@@ -79,6 +81,7 @@ struct ActiveSessionEditView: View {
     let onSave: () -> Void
 
     @State private var confirmingCancel = false
+    @State private var showingPermissionAlert = false
     @FocusState private var isNotesFocused: Bool
 
     private var notesBinding: Binding<String> {
@@ -86,6 +89,10 @@ struct ActiveSessionEditView: View {
             get: { session.summary ?? "" },
             set: { session.summary = $0.isEmpty ? nil : $0 }
         )
+    }
+    
+    private var isBusy: Bool {
+        viewModel.isRecording
     }
 
     var body: some View {
@@ -123,19 +130,51 @@ struct ActiveSessionEditView: View {
                 }
 
                 Section("Notes") {
-                    ZStack(alignment: .topLeading) {
-                        if notesBinding.wrappedValue.isEmpty {
-                            Text("Add notes while you work…")
-                                .foregroundStyle(.tertiary)
-                                .font(.body)
-                                .padding(.top, 8)
-                                .allowsHitTesting(false)
+                    VStack(alignment: .leading, spacing: 12) {
+                        ZStack(alignment: .topLeading) {
+                            if notesBinding.wrappedValue.isEmpty {
+                                Text("Add notes while you work…")
+                                    .foregroundStyle(.tertiary)
+                                    .font(.body)
+                                    .padding(.top, 8)
+                                    .allowsHitTesting(false)
+                            }
+                            TextEditor(text: notesBinding)
+                                .focused($isNotesFocused)
+                                .scrollContentBackground(.hidden)
+                                .frame(minHeight: 160)
+                                .padding(.vertical, 4)
                         }
-                        TextEditor(text: notesBinding)
-                            .focused($isNotesFocused)
-                            .scrollContentBackground(.hidden)
-                            .frame(minHeight: 160)
-                            .padding(.vertical, 4)
+
+                        HStack(spacing: 12) {
+                            Button {
+                                Task {
+                                    let granted = await viewModel.requestRecordingPermission()
+                                    if granted {
+                                        isNotesFocused = false
+                                        viewModel.isRecording ? viewModel.stopRecording() : viewModel.startRecording()
+                                    } else {
+                                        showingPermissionAlert = true
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: viewModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
+                                    Text(viewModel.isRecording ? "Stop Recording" : "Voice Note")
+                                }
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(viewModel.isRecording ? .red : .secondary)
+                            }
+                            .buttonStyle(.plain)
+
+                            Spacer()
+
+                            if viewModel.isRecording {
+                                Text("Recording…")
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                            }
+                        }
                     }
                     .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 }
@@ -181,6 +220,7 @@ struct ActiveSessionEditView: View {
                         dismiss()
                     }
                     .fontWeight(.semibold)
+                    .disabled(isBusy)
                 }
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
@@ -191,6 +231,17 @@ struct ActiveSessionEditView: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .onDisappear { viewModel.resetAudioState() }
+        .alert("Permission Required", isPresented: $showingPermissionAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text("Enable microphone access in Settings.")
+        }
     }
 }
 

@@ -18,6 +18,17 @@ private extension Color {
     }
 }
 
+private struct ElapsedTimerText: View {
+    let startTime: Date
+    let font: Font
+
+    var body: some View {
+        Text(startTime, style: .timer)
+            .font(font)
+            .monospacedDigit()
+    }
+}
+
 // MARK: - Lock screen view
 
 struct JournalLockScreenView: View {
@@ -38,10 +49,11 @@ struct JournalLockScreenView: View {
                 Text(context.attributes.activityName)
                     .font(.headline)
                     .foregroundStyle(.primary)
-                Text(formatElapsed(context.state.elapsedSeconds))
-                    .font(.system(size: 26, weight: .light, design: .rounded))
+                ElapsedTimerText(
+                    startTime: context.state.startTime,
+                    font: .system(size: 26, weight: .light, design: .rounded)
+                )
                     .foregroundStyle(.primary)
-                    .monospacedDigit()
             }
 
             Spacer()
@@ -50,13 +62,6 @@ struct JournalLockScreenView: View {
         .padding(.vertical, 14)
     }
 
-    private func formatElapsed(_ seconds: Int) -> String {
-        let h = seconds / 3600
-        let m = (seconds % 3600) / 60
-        let s = seconds % 60
-        if h > 0 { return String(format: "%d:%02d:%02d", h, m, s) }
-        return String(format: "%02d:%02d", m, s)
-    }
 }
 
 // MARK: - Widget
@@ -79,31 +84,28 @@ struct JournalLiveActivityWidget: Widget {
                     .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(formatElapsed(context.state.elapsedSeconds))
-                        .font(.system(.title3, design: .rounded))
-                        .monospacedDigit()
+                    ElapsedTimerText(
+                        startTime: context.state.startTime,
+                        font: .system(.title3, design: .rounded)
+                    )
                         .padding(.trailing, 4)
                 }
             } compactLeading: {
                 Image(systemName: context.attributes.activityIcon)
                     .foregroundStyle(Color(hex: context.attributes.colorHex))
             } compactTrailing: {
-                Text(formatElapsed(context.state.elapsedSeconds))
-                    .font(.system(.caption, design: .rounded))
-                    .monospacedDigit()
+                ElapsedTimerText(
+                    startTime: context.state.startTime,
+                    font: .system(.caption, design: .rounded)
+                )
+                .frame(width: 38, alignment: .trailing)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
             } minimal: {
                 Image(systemName: context.attributes.activityIcon)
                     .foregroundStyle(Color(hex: context.attributes.colorHex))
             }
         }
-    }
-
-    private func formatElapsed(_ seconds: Int) -> String {
-        let h = seconds / 3600
-        let m = (seconds % 3600) / 60
-        let s = seconds % 60
-        if h > 0 { return String(format: "%d:%02d:%02d", h, m, s) }
-        return String(format: "%02d:%02d", m, s)
     }
 }
 

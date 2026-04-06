@@ -48,6 +48,8 @@ enum ActivityCategory: String, CaseIterable, Identifiable {
 enum ActivityType: String, CaseIterable, Identifiable {
     case gym = "Gym"
     case running = "Running"
+    case eating = "Eating"
+    case bathroom = "Bathroom"
     case social = "Social"
     case work = "Work"
     case sideProject = "Side Project"
@@ -68,7 +70,7 @@ enum ActivityType: String, CaseIterable, Identifiable {
         switch self {
         case .gym, .running, .meditation, .rest, .relax: return .body
         case .work, .sideProject, .learning, .reading, .meeting: return .mind
-        case .social, .cooking, .cleaning, .commute, .hobby: return .life
+        case .eating, .bathroom, .social, .cooking, .cleaning, .commute, .hobby: return .life
         }
     }
 
@@ -76,6 +78,8 @@ enum ActivityType: String, CaseIterable, Identifiable {
         switch self {
         case .gym: return "dumbbell.fill"
         case .running: return "figure.run"
+        case .eating: return "takeoutbag.and.cup.and.straw.fill"
+        case .bathroom: return "toilet.fill"
         case .social: return "person.2.fill"
         case .work: return "briefcase.fill"
         case .sideProject: return "hammer.fill"
@@ -96,6 +100,8 @@ enum ActivityType: String, CaseIterable, Identifiable {
         switch self {
         case .gym: return Color(red: 0.90, green: 0.30, blue: 0.30)
         case .running: return Color(red: 0.95, green: 0.50, blue: 0.35)
+        case .eating: return Color(red: 0.88, green: 0.58, blue: 0.24)
+        case .bathroom: return Color(red: 0.42, green: 0.66, blue: 0.78)
         case .social: return Color(red: 0.35, green: 0.55, blue: 0.90)
         case .work: return Color(red: 0.40, green: 0.40, blue: 0.70)
         case .sideProject: return Color(red: 0.65, green: 0.40, blue: 0.75)

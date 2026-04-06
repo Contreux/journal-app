@@ -320,12 +320,9 @@ struct SessionRow: View {
 
     var body: some View {
         let resolved = session.resolvedType(customTypes: customTypes)
-        HStack(spacing: 0) {
-            RoundedRectangle(cornerRadius: 2)
-                .fill(resolved.color)
-                .frame(width: 3)
-                .padding(.vertical, 4)
+        let rowShape = RoundedRectangle(cornerRadius: 14)
 
+        HStack(spacing: 0) {
             HStack(spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
@@ -357,13 +354,21 @@ struct SessionRow: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(resolved.color)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.leading, 15)
+            .padding(.trailing, 12)
         }
+        .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 14)
+            rowShape
                 .fill(Color(.secondarySystemGroupedBackground))
         )
+        .overlay(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(resolved.color)
+                .frame(width: 6)
+                .padding(.vertical, 4)
+        }
+        .clipShape(rowShape)
     }
 }
 
@@ -435,6 +440,13 @@ struct SessionEditView: View {
                             get: { session.endTime ?? Date() },
                             set: { session.endTime = $0 }
                         ), displayedComponents: [.date, .hourAndMinute])
+
+                        Button {
+                            viewModel.resumeSession(session, modelContext: modelContext)
+                            dismiss()
+                        } label: {
+                            Label("Continue Session", systemImage: "play.circle")
+                        }
                     } else {
                         Button {
                             session.endTime = Date()
