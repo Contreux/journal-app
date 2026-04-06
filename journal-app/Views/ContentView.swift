@@ -187,13 +187,6 @@ struct ActiveSessionEditView: View {
                     }
                     .fontWeight(.semibold)
                 }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") { isNotesFocused = false }
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                }
             }
         }
         .presentationDetents([.large])
