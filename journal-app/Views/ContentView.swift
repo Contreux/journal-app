@@ -182,6 +182,9 @@ struct ActiveSessionEditView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         isNotesFocused = false
+                        // Explicitly mark session as changed so SwiftData saves it
+                        session.summary = notesBinding.wrappedValue.isEmpty ? nil : notesBinding.wrappedValue
+                        try? modelContext.save()
                         onSave()
                         dismiss()
                     }
