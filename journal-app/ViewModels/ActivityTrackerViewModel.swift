@@ -44,7 +44,10 @@ class ActivityTrackerViewModel {
         stopTimer()
         endLiveActivity(startTime: session.startTime)
         session.endTime = Date()
-        session.summary = summary
+        // Only update summary if a new one is provided, otherwise preserve existing
+        if let summary = summary {
+            session.summary = summary
+        }
         if session.id == currentSession?.id {
             currentSession = nil
             elapsedTime = 0

@@ -34,10 +34,15 @@ struct CalendarView: View {
                     DaySessionsView(
                         date: selectedDate,
                         sessions: sessionsForDate(selectedDate),
-                        customTypes: customTypes
-                    ) { session in
-                        editingSession = session
-                    }
+                        customTypes: customTypes,
+                        onTap: { session in
+                            editingSession = session
+                        },
+                        onDelete: { session in
+                            modelContext.delete(session)
+                            try? modelContext.save()
+                        }
+                    )
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
                     .padding(.bottom, 24)
@@ -261,6 +266,7 @@ struct DaySessionsView: View {
     let sessions: [ActivitySession]
     var customTypes: [CustomActivityType] = []
     let onTap: (ActivitySession) -> Void
+    let onDelete: (ActivitySession) -> Void
 
     private var dateLabel: String {
         if Calendar.current.isDateInToday(date) { return "Today" }
@@ -301,6 +307,15 @@ struct DaySessionsView: View {
                 ForEach(sessions) { session in
                     SessionRow(session: session, customTypes: customTypes)
                         .onTapGesture { onTap(session) }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                let impact = UIImpactFeedbackGenerator(style: .light)
+                                impact.impactOccurred()
+                                onDelete(session)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                 }
             }
         }
